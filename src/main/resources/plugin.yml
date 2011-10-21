@@ -1,0 +1,17 @@
+﻿author: Azkedar
+description: Allows players exchange items for gold and vice-versa.
+main: us.azkedar.${project.name}
+name: ${project.name}
+version: b${build.number}
+commands:
+    exch:
+        description: Show rates and help commands for item exchange
+        usage: /exch
+depend: [VirtualShop]
+permissions:
+    itemexchange.sell:
+        description: Allow usage of /exch sell
+        default: true
+    itemexchange.buy:
+        description: Allow usage of /exch buy
+        default: true

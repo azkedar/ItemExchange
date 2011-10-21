@@ -1,0 +1,37 @@
+This is a small plugin that extends VirtualShop to support item
+exchange functionality, e.g. a gold exchange.
+
+I've attempted to implement the feature that used to exist in VS 2.0.  This plugin depends on VirtualShop to function properly.  It uses some VirtualShop classes for its work, and uses the same DB configuration as VS.  However, it maintains its own separate DB connections and tables, and does not mess with any VS internals.  
+
+It implements a command "/exch" with several options:
+
+/exch - Shows help and current rates
+/exch buy <quantity> - Trade your cash for a quantity of the exchange item
+/exch sell <quantity> - Sell your items to the exchange for cash
+/exch history [page] - View transaction history
+/exch rate - Shows just the current exchange rate.
+
+The following permissions nodes are defined:
+
+itemexchange.buy - Player can buy from the exchange
+itemexchange.sell - Player can sell to the exchange
+
+You can optionally create a config.yml file in the ItemExchange plugin directory to specify the following options.  Everything has a default, so you don't need the .yml file if you want to use the defaults (in [brackets]).
+
+Options defining the item to use as currency.  
+item-name [Gold] - Define the name of the item in the exchange interface
+item-id [266] - Define the minecraft item ID to use (266 is gold ingot)
+item-durability [0] - Define the durability value to use.
+
+Options defining the price fluctuation behavior. 
+base-price [100] - The initial exchange rate with no activity.
+max-price [200] - The maximum possible exchange rate.
+min-price [50] - The minimum possible exchange rate.
+price-increment [0.1] - The amount the rate changes by per item exchanged in recent history. (Buying increases price, selling decreases price).
+prev-days [7] - The number of days back for transactions to affect the exchange rate.
+
+Options for flood control.
+transaction-size [-1] - Set a maximum quantity per transaction.  Defaults to no limit.
+transaction-cooldown [0] - Set a cooldown period between transactions for each player.  If set, a player must wait this many seconds between each transaction (buying or selling).
+
+Note that there is no actual storage for exchanged items.  They are created and destroyed as necessary to support the transactions requested. 
