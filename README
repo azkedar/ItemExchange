@@ -31,7 +31,7 @@ price-increment [0.1] - The amount the rate changes by per item exchanged in rec
 prev-days [7] - The number of days back for transactions to affect the exchange rate.
 
 Options for flood control.
-transaction-size [-1] - Set a maximum quantity per transaction.  Defaults to no limit.
+max-transaction-size [-1] - Set a maximum quantity per transaction.  Defaults to no limit.
 transaction-cooldown [0] - Set a cooldown period between transactions for each player.  If set, a player must wait this many seconds between each transaction (buying or selling).
 
 Note that there is no actual storage for exchanged items.  They are created and destroyed as necessary to support the transactions requested. 
