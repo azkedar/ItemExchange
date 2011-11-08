@@ -15,3 +15,6 @@ permissions:
     itemexchange.buy:
         description: Allow usage of /exch buy
         default: true
+    itemexchange.restart:
+        description: Allow restart of exchange plugin
+        default: false
