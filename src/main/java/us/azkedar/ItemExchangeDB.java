@@ -241,11 +241,12 @@ public class ItemExchangeDB {
 
         InventoryManager im = new InventoryManager(player);
         ItemStack purchasedItem = new ItemStack(itemId,amount,(short)itemDurability);
-        int overflow = im.addItem(purchasedItem).getAmount();
-        amount -= overflow;
-        if (overflow > 0) {
-            sender.sendMessage("Inventory full, transaction size truncated to: " + amount);
-        }
+        // For future VS.
+        //int overflow = im.addItem(purchasedItem).getAmount();
+        //amount -= overflow;
+        //if (overflow > 0) {
+        //    sender.sendMessage("Inventory full, transaction size truncated to: " + amount);
+        //}
         double cost = currentRate * amount;
         try {
              if(ConfigManager.UsingMySQL()) {
