@@ -30,7 +30,7 @@ public class ItemExchange extends JavaPlugin {
 	config = getConfiguration();
         ItemExchangeDB.Initialize(this);
         itemName = config.getString("item-name","Gold");
-               
+        config.save();
         RegisterEvents();
     }
 
