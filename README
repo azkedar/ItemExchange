@@ -11,10 +11,15 @@ It implements a command "/exch" with several options:
 /exch history [page] - View transaction history
 /exch rate - Shows just the current exchange rate.
 
+Also:
+
+/exch restart - Reloads this plugin from JAR
+
 The following permissions nodes are defined:
 
 itemexchange.buy - Player can buy from the exchange
 itemexchange.sell - Player can sell to the exchange
+itemexchange.restart - Player can restart the exchange (defaults to false)
 
 You can optionally create a config.yml file in the ItemExchange plugin directory to specify the following options.  Everything has a default, so you don't need the .yml file if you want to use the defaults (in [brackets]).
 
