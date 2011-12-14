@@ -2,7 +2,6 @@ package us.azkedar;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.lang.IllegalArgumentException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -105,8 +104,7 @@ public class ItemExchange extends JavaPlugin {
                             unloadPlugin("ItemExchange");
                             loadPlugin("ItemExchange");
                         } catch (Exception e) {
-                            sender.sendMessage("Unknown error during plugin restart:" + e.toString());
-                            return true;
+                            sender.sendMessage("Unknown error during plugin restart: " + e.toString());
                         }
                         sender.sendMessage("Reloaded ItemExchange");
                         return true;
@@ -259,7 +257,7 @@ public class ItemExchange extends JavaPlugin {
         } catch (NoSuchMethodError e) {
 // Do nothing
         } catch (java.lang.IllegalArgumentException e) {
-            // Do nothing
+            // Ignore this too
         }
     }
     

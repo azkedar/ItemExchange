@@ -135,6 +135,40 @@ public class ItemExchangeDB {
         else return tempPrice;
     }
     
+    public static double last_rate() {
+        ResultSet rs;
+         try {
+            if(ConfigManager.UsingMySQL()) {
+                rs = mdb.query(" select amount, price from exchange order by ts desc limit 1");
+            } else {
+                rs = sdb.query(" select amount, price from exchange order by ts desc limit 1");
+            }
+            while (rs.next()) {
+                return rs.getDouble(2)/rs.getDouble(1);
+            }
+        } catch (Exception e) {
+            logger.info("SQL Error during current_rate()");
+        }
+         return basePrice;
+    }
+    
+        public static String last_user() {
+        ResultSet rs;
+         try {
+            if(ConfigManager.UsingMySQL()) {
+                rs = mdb.query(" select player from exchange order by ts desc limit 1");
+            } else {
+                rs = sdb.query(" select player from exchange order by ts desc limit 1");
+            }
+            while (rs.next()) {
+                return rs.getString(1);
+            }
+        } catch (Exception e) {
+            logger.info("SQL Error during current_rate()");
+        }
+         return "NONE";
+    }
+    
     public static void history (CommandSender sender, int page) {
         ResultSet rs;
         int pageSize = 10;
@@ -234,20 +268,22 @@ public class ItemExchangeDB {
         Player player = (Player)sender;
         Method.MethodAccount account = EconomyManager.getMethod().getAccount(player.getName());
         double currentRate = current_rate();
-        if (!account.hasEnough(currentRate * amount)) {
+        double pre_cost = currentRate * amount;
+        double cost = pre_cost + priceIncrement * amount * amount;
+        
+        
+        if(amount > 64 && !player.getName().equalsIgnoreCase(last_user())) {
+            cost = ((cost - last_rate())/2) + cost;       
+        }
+        if (!account.hasEnough(cost)) {
             sender.sendMessage("You don't have the funds to complete that transaction.");
             return;
         }
 
         InventoryManager im = new InventoryManager(player);
         ItemStack purchasedItem = new ItemStack(itemId,amount,(short)itemDurability);
-        // For future VS.
-        //int overflow = im.addItem(purchasedItem).getAmount();
-        //amount -= overflow;
-        //if (overflow > 0) {
-        //    sender.sendMessage("Inventory full, transaction size truncated to: " + amount);
-        //}
-        double cost = currentRate * amount;
+        im.addItem(purchasedItem).getAmount();
+
         try {
              if(ConfigManager.UsingMySQL()) {
                 mdb.query(" insert into exchange (player,price,type,amount,ts) values ('" + player.getName() + "'," + cost + ",'bought'," + amount + ",now())");
@@ -279,6 +315,9 @@ public class ItemExchangeDB {
         im.remove(sellItem,true,true);
         double currentRate = current_rate();
         double cost = currentRate * amount;
+        if(amount > 64 && !player.getName().equalsIgnoreCase(last_user())) {
+            cost = ((cost - last_rate())/2) + cost;
+        }
         account.add(cost);
         try {
              if(ConfigManager.UsingMySQL()) {
