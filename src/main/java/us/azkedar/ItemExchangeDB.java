@@ -135,40 +135,6 @@ public class ItemExchangeDB {
         else return tempPrice;
     }
     
-    public static double last_rate() {
-        ResultSet rs;
-         try {
-            if(ConfigManager.UsingMySQL()) {
-                rs = mdb.query(" select amount, price from exchange order by ts desc limit 1");
-            } else {
-                rs = sdb.query(" select amount, price from exchange order by ts desc limit 1");
-            }
-            while (rs.next()) {
-                return rs.getDouble(2)/rs.getDouble(1);
-            }
-        } catch (Exception e) {
-            logger.info("SQL Error during current_rate()");
-        }
-         return basePrice;
-    }
-    
-        public static String last_user() {
-        ResultSet rs;
-         try {
-            if(ConfigManager.UsingMySQL()) {
-                rs = mdb.query(" select player from exchange order by ts desc limit 1");
-            } else {
-                rs = sdb.query(" select player from exchange order by ts desc limit 1");
-            }
-            while (rs.next()) {
-                return rs.getString(1);
-            }
-        } catch (Exception e) {
-            logger.info("SQL Error during current_rate()");
-        }
-         return "NONE";
-    }
-    
     public static void history (CommandSender sender, int page) {
         ResultSet rs;
         int pageSize = 10;
@@ -267,35 +233,46 @@ public class ItemExchangeDB {
         }
         Player player = (Player)sender;
         Method.MethodAccount account = EconomyManager.getMethod().getAccount(player.getName());
-        double currentRate = current_rate();
-        double pre_cost = currentRate * amount;
-        double cost = pre_cost + priceIncrement * amount * amount;
-        
-        
-        if(amount > 64 && !player.getName().equalsIgnoreCase(last_user())) {
-            cost = ((cost - last_rate())/2) + cost;       
-        }
-        if (!account.hasEnough(cost)) {
-            sender.sendMessage("You don't have the funds to complete that transaction.");
-            return;
-        }
+        double rate        = current_rate();
+        double totalCost   = 0;
+        int    amountLeft  = amount;
 
-        InventoryManager im = new InventoryManager(player);
-        ItemStack purchasedItem = new ItemStack(itemId,amount,(short)itemDurability);
-        im.addItem(purchasedItem).getAmount();
-
-        try {
-             if(ConfigManager.UsingMySQL()) {
-                mdb.query(" insert into exchange (player,price,type,amount,ts) values ('" + player.getName() + "'," + cost + ",'bought'," + amount + ",now())");
-            } else {
-                sdb.query(" insert into exchange (player,price,type,amount,ts) values ('" + player.getName() + "'," + cost + ",'bought'," + amount + ",datetime('now'))");
+        while (amountLeft > 0) {
+            int stepAmount     = 0;            
+            stepAmount = amountLeft > 64 ? 64 : amountLeft;
+            rate += stepAmount * priceIncrement;
+            double cost = stepAmount * rate;
+            
+            if (!account.hasEnough(cost)) {
+                sender.sendMessage("Ran out of money!");
+                break;
             }
+            
+            totalCost += cost;
+            amountLeft -= stepAmount;
+            account.subtract(cost);
+            InventoryManager im = new InventoryManager(player);
+            ItemStack purchasedItem = new ItemStack(itemId,stepAmount,(short)itemDurability);
+            im.addItem(purchasedItem).getAmount();
         }
-        catch (Exception e) {
-            logger.info("SQL Error during buy()");
+
+        int actualAmount = amount - amountLeft;
+        if (actualAmount > 0) {
+            try {
+                 if(ConfigManager.UsingMySQL()) {
+                    mdb.query(" insert into exchange (player,price,type,amount,ts) values ('" + player.getName() + "'," + totalCost + ",'bought'," + actualAmount + ",now())");
+                } else {
+                    sdb.query(" insert into exchange (player,price,type,amount,ts) values ('" + player.getName() + "'," + totalCost + ",'bought'," + actualAmount + ",datetime('now'))");
+                }
+            }
+            catch (Exception e) {
+                logger.info("SQL Error during buy()");
+            }
+
+            sender.sendMessage(ChatColor.GOLD + "[Exchange] " + ChatColor.WHITE + " Bought " + ChatColor.GREEN + String.format("%d",actualAmount) + " " + ChatColor.AQUA + itemName + ChatColor.WHITE + " for " + ChatColor.YELLOW + EconomyManager.getMethod().format(totalCost));
+        } else {
+            sender.sendMessage("Unable to purchase any " + itemName + ".");
         }
-        account.subtract(cost);
-        sender.sendMessage(ChatColor.GOLD + "[Exchange] " + ChatColor.WHITE + " Bought " + ChatColor.GREEN + String.format("%d",amount) + " " + ChatColor.AQUA + itemName + ChatColor.WHITE + " for " + ChatColor.YELLOW + EconomyManager.getMethod().format(cost));
     }
  
     public static void sell (CommandSender sender, int amount) {
@@ -313,23 +290,30 @@ public class ItemExchangeDB {
 
         ItemStack purchasedItem = new ItemStack(itemId,amount,(short)itemDurability);
         im.remove(sellItem,true,true);
-        double currentRate = current_rate();
-        double cost = currentRate * amount;
-        if(amount > 64 && !player.getName().equalsIgnoreCase(last_user())) {
-            cost = ((cost - last_rate())/2) + cost;
+        int amountLeft = amount;
+        double rate = current_rate();
+        double totalCost = 0;
+        
+        while (amountLeft > 0) {
+            int stepAmount = amountLeft > 64 ? 64 : amountLeft;
+            amountLeft -= stepAmount;
+            double cost = rate * stepAmount;
+            account.add(cost);
+            totalCost += cost;
+            rate -= stepAmount * priceIncrement;
         }
-        account.add(cost);
+
         try {
              if(ConfigManager.UsingMySQL()) {
-                mdb.query(" insert into exchange (player,price,type,amount,ts) values ('" + player.getName() + "'," + cost + ",'sold'," + amount + ",now())");
+                mdb.query(" insert into exchange (player,price,type,amount,ts) values ('" + player.getName() + "'," + totalCost + ",'sold'," + amount + ",now())");
             } else {
-                sdb.query(" insert into exchange (player,price,type,amount,ts) values ('" + player.getName() + "'," + cost + ",'sold'," + amount + ",datetime('now'))");
+                sdb.query(" insert into exchange (player,price,type,amount,ts) values ('" + player.getName() + "'," + totalCost + ",'sold'," + amount + ",datetime('now'))");
             }
         }
         catch (Exception e) {
             logger.info("SQL Error during buy()");
         }
 
-        sender.sendMessage(ChatColor.GOLD + "[Exchange] " + ChatColor.WHITE + " Sold " + ChatColor.GREEN + String.format("%d",amount) + " " + ChatColor.AQUA + itemName + ChatColor.WHITE + " for " + ChatColor.YELLOW + EconomyManager.getMethod().format(cost));
+        sender.sendMessage(ChatColor.GOLD + "[Exchange] " + ChatColor.WHITE + " Sold " + ChatColor.GREEN + String.format("%d",amount) + " " + ChatColor.AQUA + itemName + ChatColor.WHITE + " for " + ChatColor.YELLOW + EconomyManager.getMethod().format(totalCost));
     }
 }
