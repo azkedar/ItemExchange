@@ -238,25 +238,26 @@ public class ItemExchangeDB {
         int    amountLeft  = amount;
 
         while (amountLeft > 0) {
-            int stepAmount     = 0;            
-            stepAmount = amountLeft > 64 ? 64 : amountLeft;
-            rate += stepAmount * priceIncrement;
-            double cost = stepAmount * rate;
+            rate += priceIncrement;      
             
-            if (!account.hasEnough(cost)) {
+            if (!account.hasEnough(rate)) {
                 sender.sendMessage("Ran out of money!");
                 break;
             }
             
-            totalCost += cost;
-            amountLeft -= stepAmount;
-            account.subtract(cost);
-            InventoryManager im = new InventoryManager(player);
-            ItemStack purchasedItem = new ItemStack(itemId,stepAmount,(short)itemDurability);
-            im.addItem(purchasedItem).getAmount();
+            totalCost += rate;
+            amountLeft -= 1;
+            
+
         }
 
         int actualAmount = amount - amountLeft;
+        
+        account.subtract(totalCost);
+        InventoryManager im = new InventoryManager(player);
+        ItemStack purchasedItem = new ItemStack(itemId,actualAmount,(short)itemDurability);
+        im.addItem(purchasedItem).getAmount();
+            
         if (actualAmount > 0) {
             try {
                  if(ConfigManager.UsingMySQL()) {
@@ -295,13 +296,12 @@ public class ItemExchangeDB {
         double totalCost = 0;
         
         while (amountLeft > 0) {
-            int stepAmount = amountLeft > 64 ? 64 : amountLeft;
-            amountLeft -= stepAmount;
-            double cost = rate * stepAmount;
-            account.add(cost);
-            totalCost += cost;
-            rate -= stepAmount * priceIncrement;
+            amountLeft -= 1;
+            totalCost += rate;
+            rate -= priceIncrement;
         }
+        
+        account.add(totalCost);
 
         try {
              if(ConfigManager.UsingMySQL()) {
