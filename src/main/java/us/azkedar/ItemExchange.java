@@ -35,6 +35,7 @@ public class ItemExchange extends JavaPlugin {
     private static Configuration config;
     private static String itemName;
     private static Logger logger;
+    private static double priceIncrement;
     
     public void onDisable() {
         ItemExchangeDB.Close();
@@ -48,6 +49,7 @@ public class ItemExchange extends JavaPlugin {
 	config = getConfiguration();
         ItemExchangeDB.Initialize(this);
         itemName = config.getString("item-name","Gold");
+        priceIncrement = config.getDouble("price-increment",0.1);
         config.save();
         RegisterEvents();
     }
@@ -122,7 +124,8 @@ public class ItemExchange extends JavaPlugin {
     
     private void showRate(CommandSender sender) {
         double price = ItemExchangeDB.current_rate();
-        sender.sendMessage(ChatColor.BLUE + " [" + ChatColor.WHITE + "Current exchange rate: " + ChatColor.YELLOW +  EconomyManager.getMethod().format(price) + ChatColor.GRAY + " per " + ChatColor.LIGHT_PURPLE + itemName + ChatColor.BLUE + "]" );
+        sender.sendMessage(ChatColor.WHITE + " [" + ChatColor.GOLD + " Buying at: " + ChatColor.YELLOW +  EconomyManager.getMethod().format(price + priceIncrement) + ChatColor.GRAY + " per " + ChatColor.LIGHT_PURPLE + itemName + ChatColor.WHITE + " ]" );
+        sender.sendMessage(ChatColor.WHITE + " [" + ChatColor.BLUE + " Selling at: " + ChatColor.YELLOW +  EconomyManager.getMethod().format(price) + ChatColor.GRAY + " per " + ChatColor.LIGHT_PURPLE + itemName + ChatColor.WHITE + " ]" );
     }
     
     private void helpCommand(CommandSender sender) {
