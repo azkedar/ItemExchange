@@ -239,13 +239,15 @@ public class ItemExchangeDB {
 
         while (amountLeft > 0) {
             rate += priceIncrement;      
-            
-            if (!account.hasEnough(rate)) {
+            totalCost += rate;
+             
+            if (!account.hasEnough(totalCost)) {
+                totalCost -= rate;
                 sender.sendMessage("Ran out of money!");
                 break;
             }
             
-            totalCost += rate;
+
             amountLeft -= 1;
             
 
